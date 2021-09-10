@@ -20,19 +20,22 @@ client.on('message', async msg => {
     // TODO filter func
     
     // const msgs =  msg.channel.messages.cache.filter((m)=> m.content!="start").map((m)=> m.content);
-    const msgs = [...msg.channel.messages.cache.values()]
-    const newmsg = (await msg.channel.messages.fetch()).map((m)=> m.content)
-    // console.log(msgs);
+    // const msgs = [...msg.channel.messages.cache.values()]
+    const msgs = (await msg.channel.messages.fetch()).filter((m)=> m.content!="start").map((m)=> m.content)
+    
     // msg.channel.messages.cache.forEach((val)=> {
     //   console.log(val);
     // })
 
-    const dbObject = {participants: [1, 2], data: newmsg, channelId: msg.channel.id };
+    const dbObject = {participants: [1, 2], data: msgs, channelId: msg.channel.id };
     console.log({dbObject})
    await db.collection("games").insertOne(dbObject);
   }
   if (msg.content ==="clear") {
-    const msgs =  msg.channel.messages.cache.forEach(m=> m.delete());
+    const msgs = (await msg.channel.messages.fetch()).forEach(m=> m.delete());
+  }
+  if (msg.content === "hydrate") {
+    
   }
 })
 
