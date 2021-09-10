@@ -1,0 +1,9 @@
+{
+    "bingobutler": {
+      "board1": {
+        "players": ["john", "tyrone", "anhad"],
+        "terms": ["phrase 1","phrase 2","phrase 3","phrase 4", "phrase 5", "phrase 6"] 
+      }
+    }
+}
+  
