@@ -1,8 +1,9 @@
 {
     "bingobutler": {
       "board1": {
+        "size": 3,
         "players": ["john", "tyrone", "anhad"],
-        "terms": ["phrase 1","phrase 2","phrase 3","phrase 4", "phrase 5", "phrase 6"] 
+        "cells": ["10 pushups", "drink water", "cough", "5 jumping jacks", "13 squats", "bicep flex", "take off glasses", "spin 3 times", "finger guns"] 
       }
     }
 }
