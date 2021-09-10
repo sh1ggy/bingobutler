@@ -2,10 +2,26 @@ import type { NextPage } from 'next'
 import Head from 'next/head'
 import Image from 'next/image'
 import styles from '../styles/Home.module.css'
-import getServerSideProps from './bingo'
+import { db } from '../lib/db'
 
+async function getServerSideProps(context: any) {
+  // const res = await fetch(`https://bb.kongroo.xyz/${bingo}`);
+  // const data = await res.json;
+  const games = await db
+      .collection("games")
+      .find({})
+      .toArray();
 
-const Home: NextPage = () => {
+  const game = games[0];
+
+  return {
+      props: {game},
+  }
+}
+
+//@ts-ignore
+const Home: NextPage = ( { game } ) => {
+  console.log(game);
   return (
     <div className={styles.container}>
       <Head>
@@ -20,39 +36,11 @@ const Home: NextPage = () => {
           Bingo!
         </h1>
 
-        <div className="row">
+        { game.data.map((cell) => {
           <div className="col-12 col-lg-4 col-md-6">
-            <button type="button" className="btn btn-primary" onClick={getServerSideProps}>pressers</button>
+            <button type="button" className="btn btn-primary" onClick={getServerSideProps}>{cell}</button>
           </div>
-          <div className="col-12 col-lg-4 col-md-6">
-            <button type="button" className="btn btn-primary" onClick={getServerSideProps}>pressers</button>
-          </div>
-          <div className="col-12 col-lg-4 col-md-6">
-            <button type="button" className="btn btn-primary" onClick={getServerSideProps}>pressers</button>
-          </div>
-        </div>
-        <div className="row">
-          <div className="col-12 col-lg-4 col-md-6">
-            <button type="button" className="btn btn-primary" onClick={getServerSideProps}>pressers</button>
-          </div>
-          <div className="col-12 col-lg-4 col-md-6">
-            <button type="button" className="btn btn-primary" onClick={getServerSideProps}>pressers</button>
-          </div>
-          <div className="col-12 col-lg-4 col-md-6">
-            <button type="button" className="btn btn-primary" onClick={getServerSideProps}>pressers</button>
-          </div>
-        </div>
-        <div className="row">
-          <div className="col-12 col-lg-4 col-md-6">
-            <button type="button" className="btn btn-primary" onClick={getServerSideProps}>pressers</button>
-          </div>
-          <div className="col-12 col-lg-4 col-md-6">
-            <button type="button" className="btn btn-primary" onClick={getServerSideProps}>pressers</button>
-          </div>
-          <div className="col-12 col-lg-4 col-md-6">
-            <button type="button" className="btn btn-primary" onClick={getServerSideProps}>pressers</button>
-          </div>
-        </div>
+        }) }
       </main>
 
       <footer className={styles.footer}>
