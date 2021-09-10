@@ -1,18 +1,39 @@
 require('dotenv').config();
 
-import { MongoClient, Db } from 'mongodb';
+import { MongoClient } from 'mongodb'
 
-let db: Db;
+let uri = process.env.MONGOURL
+let dbName = "bingobutler"
 
-MongoClient.connect(process.env.MONGOURL, {
-  // @ts-ignore
-  useNewUrlParser: true,
-  useUnifiedTopology: true
+let cachedClient = null
+let cachedDb = null
 
-}, async (err, client) => {
-  if (err) return console.error(err)
-  db = await client.db("bingobutler");
-  console.log('Connected to Database')
-});
+if (!uri) {
+  throw new Error(
+    'Please define the MONGODB_URI environment variable inside .env.local'
+  )
+}
 
-export { db };
+if (!dbName) {
+  throw new Error(
+    'Please define the MONGODB_DB environment variable inside .env.local'
+  )
+}
+
+export async function connectToDatabase() {
+  if (cachedClient && cachedDb) {
+    return { client: cachedClient, db: cachedDb }
+  }
+  const client = await MongoClient.connect(uri, {
+    // @ts-ignore
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+
+  const db = await client.db(dbName)
+
+  cachedClient = client
+  cachedDb = db
+
+  return { client, db }
+}

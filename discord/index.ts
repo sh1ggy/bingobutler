@@ -1,8 +1,11 @@
 require('dotenv').config();
 import Discord from "discord.js";
-import { db } from '../lib/db';
+import { Db } from "mongodb";
+import { connectToDatabase } from '../lib/db';
 
 const client = new Discord.Client();
+let db: Db;
+
 
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
@@ -18,25 +21,27 @@ client.on('message', async msg => {
   }
   if (msg.content === 'start') {
     // TODO filter func
-    
+
     // const msgs =  msg.channel.messages.cache.filter((m)=> m.content!="start").map((m)=> m.content);
     // const msgs = [...msg.channel.messages.cache.values()]
-    const msgs = (await msg.channel.messages.fetch()).filter((m)=> m.content!="start").map((m)=> m.content)
-    
-    // msg.channel.messages.cache.forEach((val)=> {
-    //   console.log(val);
-    // })
+    const msgs = (await msg.channel.messages.fetch()).filter((m) => m.content != "start").map((m) => m.content)
 
-    const dbObject = {participants: [1, 2], data: msgs, channelId: msg.channel.id };
-    console.log({dbObject})
-   await db.collection("games").insertOne(dbObject);
+
+    const dbObject = { participants: [1, 2], data: msgs, channelId: msg.channel.id, rows: 3 };
+    console.log({ dbObject })
+    await db.collection("games").insertOne(dbObject);
   }
-  if (msg.content ==="clear") {
-    const msgs = (await msg.channel.messages.fetch()).forEach(m=> m.delete());
+  if (msg.content === "clear") {
+    const msgs = (await msg.channel.messages.fetch()).forEach(m => m.delete());
   }
   if (msg.content === "hydrate") {
-    
+
   }
 })
 
-client.login(process.env.TOKEN)
+async function main() {
+  db = await (await connectToDatabase()).db;
+  await client.login(process.env.TOKEN);
+
+}
+main();
