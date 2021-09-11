@@ -23,8 +23,11 @@ export async function getServerSideProps(context: any) {
   }
 }
 
+
 //@ts-ignore
 const Home: NextPage = ({ game }) => {
+  let io;
+  
   console.log(game);
   return (
     <div className={styles.container}>

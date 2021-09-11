@@ -15,12 +15,17 @@ const io = new Server(http);
 const client = new Discord.Client();
 let db: Db;
 
+
 export const reactionFilter: CollectorFilter = (reaction, user) => {
   return ["✅"].includes(reaction.emoji.name);
 };
 
 io.on("connection", (socket) => {
   console.log('a user connected');
+  socket.on('done', ({rt, square})=> {
+    console.log({rt, square});
+    socket.emit('doneSync', {message: "hey"})
+  })
   socket.on('disconnect', () => {
     console.log('user disconnected');
   });
