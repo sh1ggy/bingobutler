@@ -3,34 +3,20 @@ import Discord, { CollectorFilter, Message } from "discord.js";
 import { Db } from "mongodb";
 import { connectToDatabase } from '../lib/db';
 
-import express from 'express';
-import { createServer } from 'http';
-import { Server } from 'socket.io'
-const app = express();
-const http = createServer(app);
-const io = new Server(http);
+
 //TODO
 //https://medium.com/@markcolling/integrating-socket-io-with-next-js-33c4c435065e
 
 const client = new Discord.Client();
 let db: Db;
 
+
 export const reactionFilter: CollectorFilter = (reaction, user) => {
   return ["✅"].includes(reaction.emoji.name);
 };
 
-io.on("connection", (socket) => {
-  console.log('a user connected');
-  socket.on('disconnect', () => {
-    console.log('user disconnected');
-  });
-});
-
-
-
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
-
 })
 
 function shuffle(arr: string[]) {
@@ -118,8 +104,7 @@ client.on('message', async msg => {
 })
 
 async function main() {
-  const PORT = process.env.PORT || 3000;
-  await http.listen(PORT);
+
   db = await (await connectToDatabase()).db;
   await client.login(process.env.TOKEN);
 

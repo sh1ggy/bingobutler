@@ -3,7 +3,11 @@ import Image from 'next/image'
 import styles from '../styles/Bingo.module.css'
 import { connectToDatabase } from '../lib/db'
 import { ObjectId } from 'mongodb'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import socket from 'socket.io-client';
+
+const URL = "http://localhost:3001";
+
 
 export async function getServerSideProps(context: any) {
   // const res = await fetch(`https://bb.kongroo.xyz/${bingo}`);
@@ -40,8 +44,15 @@ export async function getServerSideProps(context: any) {
 //@ts-ignore
 const Home: NextPage = ({ multiGame, game }) => {
   const [completed, setCompleted] = useState([]);
+  const io = useRef(null);
 
   useEffect(() => {
+    // handling socket TODO in room
+    io.current = socket(URL);
+    io.current.on('doneSync', (data) => {
+      console.log(data)
+    })
+
     let tempCompleted = [];
     for (let i = 0; i < game.data.length; i++) {
       tempCompleted.push(false);
@@ -55,6 +66,7 @@ const Home: NextPage = ({ multiGame, game }) => {
     tempCompleted[index] = !tempCompleted[index];
     setCompleted(tempCompleted)
     console.log(completed);
+    io.current.emit('done', { rt: "sup", index })
     return;
   }
 
