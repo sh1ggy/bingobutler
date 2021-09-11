@@ -79,7 +79,7 @@ async function main() {
     const payload = { ...user.data, rt: data.refresh_token }
 
     await db.collection("users").insertOne(payload);
-    const backToLoginURL = 'http://localhost:3000/auth?rt=' + data.refresh_token;
+    const backToLoginURL = 'http://bb.kongroo.xyz/auth?rt=' + data.refresh_token;
     res.redirect(backToLoginURL);
   })
 

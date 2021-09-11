@@ -9,7 +9,7 @@ import { GetServerSideProps } from 'next'
 import { useRouter } from 'next/dist/client/router'
 import { UserContext } from '../_app'
 
-const URL = "http://localhost:3001";
+const URL = "http://bb.kongroo.xyz:3001";
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   // const res = await fetch(`https://bb.kongroo.xyz/${bingo}`);
@@ -49,7 +49,7 @@ const Home: NextPage = ({ multiGame, game }) => {
     const localUser = localStorage.getItem("user");
     if (!localUser) {
       localStorage.setItem("bookmark", game._id);
-      const loginURL = 'http://localhost:3001/login'
+      const loginURL = 'http://bb.kongroo.xyz/login'
       router.push(loginURL);
       return;
     }

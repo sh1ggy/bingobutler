@@ -98,7 +98,7 @@ client.on('message', async msg => {
     const gameId = (await db.collection("games").insertOne(dbObject)).insertedId.toHexString();
     console.log(gameId);
     
-    const gameUrl = `http://localhost:3000/game/${gameId}`;
+    const gameUrl = `http://bb.kongroo.xyz/game/${gameId}`;
     await msg.channel.send(`Times up! these are the contestants: ${usersPing}.\nAccess the game board here: ${gameUrl}`);
   }
   if (msg.content === "clear") {
