@@ -1,5 +1,5 @@
 require('dotenv').config();
-import Discord, { CollectorFilter } from "discord.js";
+import Discord, { CollectorFilter, Message } from "discord.js";
 import { Db } from "mongodb";
 import { connectToDatabase } from '../lib/db';
 
@@ -54,35 +54,60 @@ client.on('message', async msg => {
   if (msg.content === 'ping') {
     msg.reply('pong');
   }
-  if (msg.content === 'start') {
-    const size = 3;
+  if (msg.content.startsWith('start')) {
+    const participantWaitTimer = 3;
+    const deleteWaitTimer = 3;
+    const msgSize = 3;
+    let size = msgSize;
     // TODO filter func
-    const msgs = (await msg.channel.messages.fetch()).filter((m) => m.content != "start").map((m) => m.content)
+    const messageFilter = (m: Message) => {
+      if (m.content.startsWith("start")) return false;
+      if (m.author.bot) return false;
+      return true;
+    } 
+    const msgs = (await msg.channel.messages.fetch()).filter(messageFilter).map((m) => m.content)
     shuffle(msgs);
     const diff = msgs.length - (size ** 2);
     if (diff > 0) msgs.splice(-diff, diff);
-    const participateMsg = await msg.reply("Please react to ✅ to participate in lockout");
+    let participantWaitCountdown = participantWaitTimer;
+
+    const participateMsg = await msg.channel.send(`Please react to ✅ to participate in lockout`);
     await participateMsg.react("✅");
-    let timerCountdown = 10;
     let timerRef = setInterval(async () => {
-      timerCountdown--;
-      await participateMsg.edit(`Please react to ✅ to participate in lockout (Finishes in ${timerCountdown})`)
-    }, 1000)
-    const msgReactions = await participateMsg.awaitReactions(reactionFilter, { max: 4, time: 10000 });
+      participantWaitCountdown--;
+      await participateMsg.edit(`Please react to ✅ to participate in lockout (Finishes in ${participantWaitCountdown})`)
+    }, participantWaitCountdown*1000)
+    const msgReactions = await participateMsg.awaitReactions(reactionFilter, { max: 4, time: participantWaitCountdown*1000 });
     clearInterval(timerRef);
     let usersPing = "";
     console.log(msgReactions.size);
+
     if (msgReactions.size == 0) {
-      msg.channel.send("didnt react fast enough noone attended");
+      await participateMsg.edit("No one is attending! Clearing messages...");
+      await participateMsg.reactions.removeAll();
+      let deleteCountdown = deleteWaitTimer;
+
+      timerRef = setInterval(async () => {
+        deleteCountdown--;
+        await participateMsg.delete();
+        await msg.delete();
+      }, deleteCountdown*1000)
       return;
     }
-    (await msgReactions.first().users.fetch()).filter(u => !u.bot).forEach(u => usersPing += u.toString() + " ")
+    let participants = (await msgReactions.first().users.fetch()).filter(u => !u.bot);
+    participants.forEach(u => usersPing += u.toString() + " ")
+    
     await participateMsg.edit(`Times up! these are the contestants: ${usersPing}`);
-    await msg.channel.send(usersPing);
-    const dbObject = { participants: [1, 2], data: msgs, channelId: msg.channel.id, size: 3 };
+    let split = msg.content.split(" ");
+    if (split.length == 2) {
+      size = parseInt(split[1]);
+    }
+    const dbObject = { participants: participants.map(u => u.id), data: msgs, channelId: msg.channel.id, size: size };
     console.log({ dbObject })
     await db.collection("games").insertOne(dbObject);
+    
 
+    
   }
   if (msg.content === "clear") {
     const msgs = (await msg.channel.messages.fetch()).forEach(m => m.delete());
