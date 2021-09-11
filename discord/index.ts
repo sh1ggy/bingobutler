@@ -83,17 +83,19 @@ client.on('message', async msg => {
     let participants = (await msgReactions.first().users.fetch()).filter(u => !u.bot);
     participants.forEach(u => usersPing += u.toString() + " ")
     
-    await participateMsg.edit(`Times up! these are the contestants: ${usersPing}`);
+    await participateMsg.delete();
+    
     let split = msg.content.split(" ");
     if (split.length == 2) {
       size = parseInt(split[1]);
     }
     const dbObject = { participants: participants.map(u => u.id), data: msgs, channelId: msg.channel.id, size: size };
-    console.log({ dbObject })
-    await db.collection("games").insertOne(dbObject);
+    console.log({ dbObject });
+    const gameId = (await db.collection("games").insertOne(dbObject)).insertedId.toHexString();
+    console.log(gameId);
     
-
-    
+    const gameUrl = `http://localhost:3000/game/${gameId}`;
+    await msg.channel.send(`Times up! these are the contestants: ${usersPing}.\nAccess the game board here: ${gameUrl}`);
   }
   if (msg.content === "clear") {
     const msgs = (await msg.channel.messages.fetch()).forEach(m => m.delete());

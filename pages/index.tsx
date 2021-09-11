@@ -9,38 +9,6 @@ import socket from 'socket.io-client';
 const URL = "http://localhost:3001";
 
 
-export async function getServerSideProps(context: any) {
-  // const res = await fetch(`https://bb.kongroo.xyz/${bingo}`);
-  // const data = await res.json;
-  const { db } = await connectToDatabase();
-
-  const games = await db
-    .collection("games")
-    .find({})
-    .toArray();
-
-  const game = games[0];
-  game._id = new ObjectId(game._id).toHexString();
-  console.log(game);
-  const gameSize = 3;
-  var multiGame = [];
-  for (let i = 0; i < gameSize; i++) {
-    var innerArray = [];
-    for (let j = 0; j < gameSize; j++) {
-      var index = i * gameSize + j;
-      innerArray.push(game.data[index]);
-      // console.log(i, j, game.data[j]);
-    }
-    multiGame.push(innerArray);
-  }
-
-  return {
-    props: { multiGame, game },
-  }
-}
-
-
-
 //@ts-ignore
 const Home: NextPage = ({ multiGame, game }) => {
   const [completed, setCompleted] = useState([]);
