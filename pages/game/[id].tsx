@@ -19,9 +19,8 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
     .collection("games")
     .findOne({ _id: new ObjectId(ctx.params.id.toString()) })
 
-
-  game._id = game._id.toHexString();
   console.log(game);
+  game._id = game._id.toHexString();
   const gameSize = 3;
   var multiGame = [];
   for (let i = 0; i < gameSize; i++) {
@@ -42,6 +41,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 //@ts-ignore
 const Home: NextPage = ({ multiGame, game }) => {
   const [completed, setCompleted] = useState([]);
+  const [gameWinner, setGameWinner] = useState<any>(false);
   const io = useRef(null);
   const router = useRouter();
   const { user, setUser } = useContext(UserContext)
@@ -57,9 +57,13 @@ const Home: NextPage = ({ multiGame, game }) => {
 
     // handling socket TODO in room
     io.current = socket(URL);
-    io.current.on('doneSync', (data) => {
+    io.current.on('sync', (data) => {
       setCompleted(data.state);
       console.log(data)
+    })
+
+    io.current.on('gameDone', (data) => {
+      setGameWinner(data.winner);
     })
 
     // let tempCompleted = [];
@@ -68,14 +72,18 @@ const Home: NextPage = ({ multiGame, game }) => {
     // }
     setCompleted(game.state);
   }, []);
-  console.log(completed);
 
   function onLock(index) {
     // let tempCompleted = [...completed];
     // tempCompleted[index] = !tempCompleted[index];
     // setCompleted(tempCompleted)
     console.log(completed);
-    io.current.emit('done', { rt: user.rt, index, gameId: game._id })
+    if (user.id == completed[index]) {
+      io.current.emit('undo', { rt: user.rt, index, gameId: game._id });
+      return;
+    }
+    io.current.emit('done', { rt: user.rt, index, gameId: game._id });
+
     return;
   }
 
@@ -83,14 +91,17 @@ const Home: NextPage = ({ multiGame, game }) => {
     <div className="container">
       <main className={styles.main}>
         <h1 className={styles.title}>
-          Bingo!
+          Bingo Butler
         </h1>
+        <h2>
+          {gameWinner && `${gameWinner.username} has won`}
+        </h2>  
         <table className={`table-dark ${styles.thc} ${styles.table} col-12`}>
           <tbody>
             {multiGame.map((row, rowIndex) => (
               <tr>
                 {row.map((cell, index) => (
-                  <td className={`col-12 col-lg-4 ${completed[rowIndex * game.size + index] ? styles.clicked : styles.unclicked}`} onClick={() => onLock(rowIndex * game.size + index)}>
+                  <td className={`col-lg-4 ${completed[rowIndex * game.size + index] != -1 ? styles.clicked : styles.unclicked}`} onClick={() => onLock(rowIndex * game.size + index)}>
                     <p className={styles.unselectable}>{cell}</p>
                   </td>
                 ))}

@@ -1,6 +1,6 @@
 require('dotenv').config();
 import Discord, { CollectorFilter, Message } from "discord.js";
-import { Db } from "mongodb";
+import { Db, ObjectId } from "mongodb";
 import { connectToDatabase } from '../lib/db';
 
 
@@ -9,7 +9,6 @@ import { connectToDatabase } from '../lib/db';
 
 const client = new Discord.Client();
 let db: Db;
-
 
 export const reactionFilter: CollectorFilter = (reaction, user) => {
   return ["✅"].includes(reaction.emoji.name);
@@ -91,15 +90,21 @@ client.on('message', async msg => {
     }
     const stateArrayInit = [];
     for (let i = 0; i < msgs.length; i++) {
-      stateArrayInit.push(0);
+      stateArrayInit.push(-1);
     }
     const dbObject = { participants: participants.map(u => u.id), data: msgs, channelId: msg.channel.id, size: size, state: stateArrayInit };
-    console.log({ dbObject });
     const gameId = (await db.collection("games").insertOne(dbObject)).insertedId.toHexString();
     console.log(gameId);
-    
     const gameUrl = `http://localhost:3000/game/${gameId}`;
-    await msg.channel.send(`Times up! these are the contestants: ${usersPing}.\nAccess the game board here: ${gameUrl}`);
+    
+    
+    const masterMsg = await msg.channel.send(`Times up! these are the contestants: ${usersPing}.\nAccess the game board here: ${gameUrl}`);
+    
+    await db.collection("games").findOneAndUpdate(
+      { _id: new ObjectId(gameId) },
+      { $set: { masterMsgId: masterMsg.id } },
+    );
+    
   }
   if (msg.content === "clear") {
     const msgs = (await msg.channel.messages.fetch()).forEach(m => m.delete());
