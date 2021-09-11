@@ -89,7 +89,11 @@ client.on('message', async msg => {
     if (split.length == 2) {
       size = parseInt(split[1]);
     }
-    const dbObject = { participants: participants.map(u => u.id), data: msgs, channelId: msg.channel.id, size: size };
+    const stateArrayInit = [];
+    for (let i = 0; i < msgs.length; i++) {
+      stateArrayInit.push(0);
+    }
+    const dbObject = { participants: participants.map(u => u.id), data: msgs, channelId: msg.channel.id, size: size, state: stateArrayInit };
     console.log({ dbObject });
     const gameId = (await db.collection("games").insertOne(dbObject)).insertedId.toHexString();
     console.log(gameId);

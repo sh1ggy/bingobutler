@@ -73,7 +73,7 @@ const Home: NextPage = ({ multiGame, game }) => {
     tempCompleted[index] = !tempCompleted[index];
     setCompleted(tempCompleted)
     console.log(completed);
-    io.current.emit('done', { rt: user.rt, index })
+    io.current.emit('done', { rt: user.rt, index, gameId: game._id })
     return;
   }
 

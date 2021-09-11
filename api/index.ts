@@ -4,6 +4,7 @@ import { createServer } from 'http';
 import { Server } from 'socket.io'
 import cors from 'cors';
 import { connectToDatabase } from '../lib/db';
+import { Db, MongoDBNamespace, ObjectId } from 'mongodb';
 const axios = require('axios').default;
 const app = express();
 const http = createServer(app);
@@ -11,13 +12,21 @@ const io = new Server(http, {
   cors: { origin: "*", }
 });
 app.use(cors());
-
+let db: Db;
 const callback_url = 'http://127.0.0.1:3001/auth/callback'
 
 io.on("connection", (socket) => {
   console.log('a user connected');
-  socket.on('done', ({ rt, index }) => {
-    console.log({ rt, index });
+  socket.on('done', async ({ rt, index, gameId }) => {
+    console.log({ rt, index, gameId });
+    const user = await db.collection("users").findOne({rt});
+    const game = await db.collection("game").findOneAndUpdate(
+      { _id: new ObjectId(gameId), state : {$elemMatch : index}},
+      { $set: {'state.$' : user.id} },
+      // {`state.$[index]`: user.id }
+    );
+    console.log(user);
+    console.log(game);
     socket.emit('doneSync', { message: "hey" })
   })
   socket.on('disconnect', () => {
@@ -87,7 +96,6 @@ app.get('/auth/callback', async (req, res) => {
   const payload = { ...user.data, rt: data.refresh_token }
 
   // res.send(JSON.stringify(payload));
-  const { db } = await connectToDatabase();
   await db.collection("users").insertOne(payload);
 
   const backToLoginURL = 'http://localhost:3000/auth?rt=' + data.refresh_token;
@@ -96,4 +104,6 @@ app.get('/auth/callback', async (req, res) => {
 })
 
 const PORT = process.env.PORT || 3001;
-http.listen(PORT);
+http.listen(PORT, async () => {
+  db = await (await connectToDatabase()).db;
+});

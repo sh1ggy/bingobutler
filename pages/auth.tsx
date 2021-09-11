@@ -1,7 +1,8 @@
 import { GetServerSideProps, NextPage } from "next";
 import { useRouter } from "next/dist/client/router";
-import { useEffect } from "react";
-import { connectToDatabase } from '../lib/db'
+import { useContext, useEffect } from "react";
+import { connectToDatabase } from '../lib/db';
+import { UserContext } from './_app';
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const rt = ctx.query.rt;
@@ -17,9 +18,11 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 
 //@ts-ignore
 const Auth: NextPage = ({ user }) => {
+  const {setUser} = useContext(UserContext); 
   const router = useRouter();
   useEffect(() => {
     localStorage.setItem("user", JSON.stringify(user));
+    setUser(user);
     const bookmark = localStorage.getItem("bookmark");
     if (bookmark) {
       localStorage.removeItem("bookmark");
