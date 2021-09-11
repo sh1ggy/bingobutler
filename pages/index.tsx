@@ -1,6 +1,6 @@
 import type { NextPage } from 'next'
 import styles from '../styles/Home.module.css'
-const URL = "http://localhost:3001";
+const URL = "https://bb.kongroo.xyz";
 
 
 //@ts-ignore
