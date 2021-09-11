@@ -28,7 +28,7 @@ io.on("connection", (socket) => {
       { $set: { [access]: user.id } },
       { returnDocument: 'after' }
     );
-    socket.emit('doneSync', { state: game.state })
+    socket.broadcast.emit('doneSync', { state: game.state }, )
   })
 
   socket.on('disconnect', () => {
