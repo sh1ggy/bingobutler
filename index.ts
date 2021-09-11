@@ -3,8 +3,13 @@ import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io'
 import cors from 'cors';
-import { connectToDatabase } from '../lib/db';
+import { connectToDatabase } from './lib/db';
 import { Db, MongoDBNamespace, ObjectId } from 'mongodb';
+import next from 'next';
+
+const dev = process.env.NODE_ENV !== 'production'
+const nextapp = next({ dev })
+const handle = nextapp.getRequestHandler()
 const axios = require('axios').default;
 const app = express();
 const http = createServer(app);
@@ -28,7 +33,7 @@ io.on("connection", (socket) => {
       { $set: { [access]: user.id } },
       { returnDocument: 'after' }
     );
-    socket.broadcast.emit('doneSync', { state: game.state }, )
+    socket.emit('doneSync', { state: game.state }, )
   })
 
   socket.on('disconnect', () => {
@@ -47,7 +52,7 @@ app.get('/login', (req, res) => {
   );
 })
 
-app.get('/auth/callback', async (req, res) => {
+app.get('/callback', async (req, res) => {
   let code = req.query.code;
   console.log(code);
   const params = new URLSearchParams();
