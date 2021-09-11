@@ -69,12 +69,12 @@ const Home: NextPage = ({ multiGame, game }) => {
   }
 
   return (
-    <div className={styles.container}>
+    <div className="container">
       <main className={styles.main}>
         <h1 className={styles.title}>
-          Bingo! {game.participants}
+          Bingo!
         </h1>
-        <table className={`table-dark ${styles.thc} ${styles.table}`}>
+        <table className={`table-dark ${styles.thc} ${styles.table} col-12`}>
           <tbody>
             {multiGame.map((row, rowIndex) => (
               <tr>
@@ -88,10 +88,6 @@ const Home: NextPage = ({ multiGame, game }) => {
           </tbody>
         </table>
       </main>
-
-      <footer className={styles.footer}>
-        <p>kongi</p>
-      </footer>
     </div>
   )
 }
