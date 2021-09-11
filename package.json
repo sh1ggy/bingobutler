@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "discord": "nodemon --exec ts-node discord/index.ts",
-    "api": "nodemon --exec ts-node api/index.ts"
+    "api": "nodemon --exec ts-node index.ts"
   },
   "dependencies": {
     "axios": "^0.21.4",
