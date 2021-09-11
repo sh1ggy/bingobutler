@@ -6,45 +6,54 @@ import { ObjectId } from 'mongodb'
 import { useEffect, useRef, useState } from 'react'
 import socket from 'socket.io-client';
 import { GetServerSideProps } from 'next'
+import { useRouter } from 'next/dist/client/router'
 
 const URL = "http://localhost:3001";
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
-    // const res = await fetch(`https://bb.kongroo.xyz/${bingo}`);
-    // const data = await res.json;
-    const { db } = await connectToDatabase();
-    
-  
-    const game = await db
-      .collection("games")
-      .findOne({_id: new ObjectId(ctx.params.id.toString())})
-      
-  
-    game._id = new ObjectId(game._id).toHexString();
-    console.log(game);
-    const gameSize = 3;
-    var multiGame = [];
-    for (let i = 0; i < gameSize; i++) {
-      var innerArray = [];
-      for (let j = 0; j < gameSize; j++) {
-        var index = i * gameSize + j;
-        innerArray.push(game.data[index]);
-        // console.log(i, j, game.data[j]);
-      }
-      multiGame.push(innerArray);
+  // const res = await fetch(`https://bb.kongroo.xyz/${bingo}`);
+  // const data = await res.json;
+  const { db } = await connectToDatabase();
+  const game = await db
+    .collection("games")
+    .findOne({ _id: new ObjectId(ctx.params.id.toString()) })
+
+
+  game._id = game._id.toHexString();
+  console.log(game);
+  const gameSize = 3;
+  var multiGame = [];
+  for (let i = 0; i < gameSize; i++) {
+    var innerArray = [];
+    for (let j = 0; j < gameSize; j++) {
+      var index = i * gameSize + j;
+      innerArray.push(game.data[index]);
+      // console.log(i, j, game.data[j]);
     }
-  
-    return {
-      props: { multiGame, game },
-    }
+    multiGame.push(innerArray);
   }
+
+  return {
+    props: { multiGame, game },
+  }
+}
 
 //@ts-ignore
 const Home: NextPage = ({ multiGame, game }) => {
   const [completed, setCompleted] = useState([]);
   const io = useRef(null);
-
+  const router = useRouter();
+  const [user, setUser] = useState(null);
   useEffect(() => {
+    const localUser = localStorage.getItem("user");
+    if (!localUser) {
+      localStorage.setItem("bookmark", game._id);
+      const loginURL = 'http://localhost:3001/login'
+      router.push(loginURL);
+      return;
+    }
+    setUser(JSON.parse(localUser));
+
     // handling socket TODO in room
     io.current = socket(URL);
     io.current.on('doneSync', (data) => {
@@ -64,7 +73,7 @@ const Home: NextPage = ({ multiGame, game }) => {
     tempCompleted[index] = !tempCompleted[index];
     setCompleted(tempCompleted)
     console.log(completed);
-    io.current.emit('done', { rt: "sup", index })
+    io.current.emit('done', { rt: user.rt, index })
     return;
   }
 

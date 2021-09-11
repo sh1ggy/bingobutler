@@ -3,8 +3,7 @@ import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io'
 import cors from 'cors';
-// import fetch from 'node-fetch';
-// const fetch = require('node-fetch');
+import { connectToDatabase } from '../lib/db';
 const axios = require('axios').default;
 const app = express();
 const http = createServer(app);
@@ -14,7 +13,6 @@ const io = new Server(http, {
 app.use(cors());
 
 const callback_url = 'http://127.0.0.1:3001/auth/callback'
-
 
 io.on("connection", (socket) => {
   console.log('a user connected');
@@ -65,14 +63,36 @@ app.get('/auth/callback', async (req, res) => {
       'Accept': 'application/json'
     },
   }
+  let data;
   try {
     const result = await axios.post(url, params, options);
     console.log(result.data);
-
+    // a = result.data.access_token;
+    // rt = result.data.refresh_token;
+    data = result.data;
   } catch (error) {
     console.log(error.message);
+    res.status(400);
+    return res.send(error.message);
   }
-  res.send("Done")
+
+  const resourceURL = 'https://discordapp.com/api/v8/users/@me'
+  const resOptions = {
+    headers: {
+      Authorization: 'Bearer ' + data.access_token
+    },
+  }
+  let user = await axios.get(resourceURL, resOptions)
+  console.log(user.data)
+  const payload = { ...user.data, rt: data.refresh_token }
+
+  // res.send(JSON.stringify(payload));
+  const { db } = await connectToDatabase();
+  await db.collection("users").insertOne(payload);
+
+  const backToLoginURL = 'http://localhost:3000/auth?rt=' + data.refresh_token;
+  // db, localstorage, websockets
+  res.redirect(backToLoginURL);
 })
 
 const PORT = process.env.PORT || 3001;
