@@ -1,9 +1,10 @@
 import type { NextPage } from 'next'
 import Head from 'next/head'
 import Image from 'next/image'
-import styles from '../styles/Home.module.css'
+import styles from '../styles/Bingo.module.css'
 import { connectToDatabase } from '../lib/db'
 import { ObjectId } from 'mongodb'
+import { useEffect, useState } from 'react'
 
 export async function getServerSideProps(context: any) {
   // const res = await fetch(`https://bb.kongroo.xyz/${bingo}`);
@@ -11,24 +12,53 @@ export async function getServerSideProps(context: any) {
   const { db } = await connectToDatabase();
 
   const games = await db
-      .collection("games")
-      .find({})
-      .toArray();
+    .collection("games")
+    .find({})
+    .toArray();
 
   const game = games[0];
   game._id = new ObjectId(game._id).toHexString();
-  // console.log(game);
+  // const gameSize: number = game.size;
+  const gameSize = 3;
+  var multiGame = [];
+  for (let i = 0; i < gameSize; i++) {
+    var innerArray = [];
+    for (let j = 0; j < gameSize; j++) {
+      var index = i * gameSize + j;
+      innerArray.push(game.data[index]);
+      // console.log(i, j, game.data[j]);
+    }
+    multiGame.push(innerArray);
+  }
+
   return {
-    props: { game },
+    props: { multiGame, game },
   }
 }
 
 
+
 //@ts-ignore
-const Home: NextPage = ({ game }) => {
+const Home: NextPage = ({ multiGame, game }) => {
   let io;
+  const [completed, setCompleted] = useState([]);
+  useEffect(() => {
+    let tempCompleted = [];
+    for (let i = 0; i < game.data.length; i++) {
+      tempCompleted.push(false);
+    }
+    setCompleted(tempCompleted);
+  }, []);
+  console.log(completed);
   
-  console.log(game);
+  function sup(index) {
+    let tempCompleted = [...completed];
+    tempCompleted[index] = !tempCompleted[index];
+    setCompleted(tempCompleted)
+    console.log(completed);
+    return;
+  }
+
   return (
     <div className={styles.container}>
       <Head>
@@ -43,11 +73,22 @@ const Home: NextPage = ({ game }) => {
           Bingo!
         </h1>
 
-        {game.data.map((cell) => (
-          <div className="col-12 col-lg-4 col-md-6">
-            <button type="button" className="btn btn-primary">{cell}</button>
-          </div>
-        ))}
+        <table className={`table-dark ${styles.thc} ${styles.table}`}>
+          <tbody>
+
+            {multiGame.map((row, rowIndex) => (
+              <tr>
+                {row.map((cell, index) => (
+                  
+                  <td className={`col-12 col-lg-4 ${completed[rowIndex * game.size + index] ? styles.clicked : styles.unclicked}`} onClick={() => sup(rowIndex * game.size + index)}>
+                    <p className={styles.unselectable}>{cell}</p>
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
       </main>
 
       <footer className={styles.footer}>
