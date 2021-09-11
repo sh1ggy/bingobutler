@@ -1,0 +1,44 @@
+.unselectable {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    visibility: visible;
+    display: block;
+}
+
+.table {
+    background-color: teal;
+    border-collapse: collapse;
+}
+
+.thc > tbody > tr > td:hover {
+    background-color: #ffd56a;
+    color: black;
+}
+
+/* .thc > tbody > tr > td:hover:active {
+    background-color: #ffd56a;
+    color: black;
+} */
+
+.clicked {
+    background-color: #ffd56a;
+    color: black;
+}
+
+.clicked:hover:active {
+    background-color: teal;
+    color:white;
+}
+
+.unclicked:hover {
+    background-color: teal;
+    color:white;
+}
+
+.unclicked:hover:active {
+    background-color: #ffd56a;
+    color: black;
+}
