@@ -3,10 +3,11 @@ import Image from 'next/image'
 import styles from '../../styles/Bingo.module.css'
 import { connectToDatabase } from '../../lib/db'
 import { ObjectId } from 'mongodb'
-import { useEffect, useRef, useState } from 'react'
+import { useContext, useEffect, useRef, useState } from 'react'
 import socket from 'socket.io-client';
 import { GetServerSideProps } from 'next'
 import { useRouter } from 'next/dist/client/router'
+import { UserContext } from '../_app'
 
 const URL = "http://localhost:3001";
 
@@ -43,7 +44,7 @@ const Home: NextPage = ({ multiGame, game }) => {
   const [completed, setCompleted] = useState([]);
   const io = useRef(null);
   const router = useRouter();
-  const [user, setUser] = useState(null);
+  const { user, setUser } = useContext(UserContext)
   useEffect(() => {
     const localUser = localStorage.getItem("user");
     if (!localUser) {
@@ -57,21 +58,22 @@ const Home: NextPage = ({ multiGame, game }) => {
     // handling socket TODO in room
     io.current = socket(URL);
     io.current.on('doneSync', (data) => {
+      setCompleted(data.state);
       console.log(data)
     })
 
-    let tempCompleted = [];
-    for (let i = 0; i < game.data.length; i++) {
-      tempCompleted.push(false);
-    }
-    setCompleted(tempCompleted);
+    // let tempCompleted = [];
+    // for (let i = 0; i < game.data.length; i++) {
+    //   tempCompleted.push(false);
+    // }
+    setCompleted(game.state);
   }, []);
   console.log(completed);
 
   function onLock(index) {
-    let tempCompleted = [...completed];
-    tempCompleted[index] = !tempCompleted[index];
-    setCompleted(tempCompleted)
+    // let tempCompleted = [...completed];
+    // tempCompleted[index] = !tempCompleted[index];
+    // setCompleted(tempCompleted)
     console.log(completed);
     io.current.emit('done', { rt: user.rt, index, gameId: game._id })
     return;

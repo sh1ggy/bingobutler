@@ -17,18 +17,20 @@ const callback_url = 'http://127.0.0.1:3001/auth/callback'
 
 io.on("connection", (socket) => {
   console.log('a user connected');
+  
   socket.on('done', async ({ rt, index, gameId }) => {
-    console.log({ rt, index, gameId });
-    const user = await db.collection("users").findOne({rt});
-    const game = await db.collection("game").findOneAndUpdate(
-      { _id: new ObjectId(gameId), state : {$elemMatch : index}},
-      { $set: {'state.$' : user.id} },
-      // {`state.$[index]`: user.id }
+    const user = await db.collection("users").findOne({ rt });
+    console.log({ rt, index, gameId, user });
+    // Unconventional method of editing array, relational and other forms dictate this needs to be [{ind: 0, val:0}.....]
+    const access = 'state.' + index;
+    const { value: game } = await db.collection("games").findOneAndUpdate(
+      { _id: new ObjectId(gameId) },
+      { $set: { [access]: user.id } },
+      { returnDocument: 'after' }
     );
-    console.log(user);
-    console.log(game);
-    socket.emit('doneSync', { message: "hey" })
+    socket.emit('doneSync', { state: game.state })
   })
+
   socket.on('disconnect', () => {
     console.log('user disconnected');
   });
