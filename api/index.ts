@@ -49,7 +49,7 @@ client.on('message', async msg => {
     msg.reply('pong');
   }
   if (msg.content.startsWith('start')) {
-    const participantWaitTimer = 3;
+    const participantWaitTimer = 10;
     const deleteWaitTimer = 3;
     const msgSize = 3;
     let size = msgSize;
@@ -60,6 +60,10 @@ client.on('message', async msg => {
       return true;
     }
     const msgs = (await msg.channel.messages.fetch()).filter(messageFilter).map((m) => m.content)
+    if (msgs.length < Math.pow(size, 2)) {
+      await msg.channel.send(`Not enough bingo terms`);
+      return;  
+    }
     shuffle(msgs);
     const diff = msgs.length - (size ** 2);
     if (diff > 0) msgs.splice(-diff, diff);
