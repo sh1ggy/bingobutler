@@ -59,7 +59,7 @@ function MyApp({ Component, pageProps }: AppProps) {
         <div className="collapse navbar-collapse" id="navbarSupportedContent">
           <ul className="navbar-nav mr-auto">
             <li className="nav-item active">
-              {!!user && <button className="btn btn-secondary" onClick={logout}>Logout</button>}
+              {!!user && <button className="btn btn-secondary" style={{backgroundColor: "#832900", color: "##ffe69c"}} onClick={logout}>Logout</button>}
             </li>
           </ul>
         </div>
