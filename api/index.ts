@@ -148,6 +148,12 @@ client.on('message', async msg => {
 
     //io
     const sock = io.of('/'+gameId);
+    sock.on("connection", ()=> {
+      console.log("user to room " + gameId);
+      sock.on('done', doneHandlerFactory(sock));
+      sock.on('undo', undohandlerFactory(sock));
+    })
+
 
 
     const masterMsg = await msg.channel.send(`Times up! these are the contestants: ${usersPing}.\nAccess the game board here: ${gameUrl}`);

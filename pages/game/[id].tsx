@@ -59,7 +59,7 @@ const Home: NextPage = ({ multiGame, game }) => {
     setUser(JSON.parse(localUser));
 
     // handling socket TODO in room
-    io.current = socket(URL);
+    io.current = socket(URL + "/" + game._id);
     io.current.on('sync', (data) => {
       setCompleted(data.state);
       console.log(data)
