@@ -62,7 +62,7 @@ client.on('message', async msg => {
     const msgs = (await msg.channel.messages.fetch()).filter(messageFilter).map((m) => m.content)
     if (msgs.length < Math.pow(size, 2)) {
       await msg.channel.send(`Not enough bingo terms`);
-      return;  
+      return;
     }
     shuffle(msgs);
     const diff = msgs.length - (size ** 2);
@@ -104,17 +104,21 @@ client.on('message', async msg => {
       stateArrayInit.push(-1);
     }
 
-    const participantsPayload = participants.map(u=> {
+    const hueRange = 360 / participants.size;
+    let pInd = 0;
+    const participantsPayload = participants.map((u) => {
+
       const hsl = {
-        h: Math.random()* 360,
+        h: Math.random() * hueRange + pInd * hueRange,
         s: 0.4,
         l: 0.6
       }
+      pInd++;
       return {
-        hsl, 
+        hsl,
         id: u.id,
         username: u.username
-      } 
+      }
     })
 
     const dbObject = {
@@ -190,7 +194,7 @@ io.on("connection", (socket) => {
         await db.collection("games").findOneAndDelete({
           _id: new ObjectId(gameId)
         })
-        io.emit('gameDone', { winner: game.participants.find((p)=> p.id == key) });
+        io.emit('gameDone', { winner: game.participants.find((p) => p.id == key) });
 
       }
     }
