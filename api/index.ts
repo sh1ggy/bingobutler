@@ -65,8 +65,6 @@ client.on('message', async msg => {
   if (msg.content.startsWith('start')) {
     const participantWaitTimer = 5;
     const deleteWaitTimer = 3;
-    const msgSize = 3;
-    let size = msgSize;
     // TODO filter func
     const messageFilter = (m: Message) => {
       if (m.content.startsWith("start")) return false;
@@ -74,6 +72,12 @@ client.on('message', async msg => {
       return true;
     }
     const msgs = (await msg.channel.messages.fetch()).filter(messageFilter).map((m) => m.content)
+    let size = 3;
+    let split = msg.content.split(" ");
+    if (split.length == 2) {
+      size = parseInt(split[1]);
+    }
+
     if (msgs.length < Math.pow(size, 2)) {
       await msg.channel.send(`Not enough bingo terms`);
       return;
@@ -109,10 +113,7 @@ client.on('message', async msg => {
 
     await participateMsg.delete();
 
-    let split = msg.content.split(" ");
-    if (split.length == 2) {
-      size = parseInt(split[1]);
-    }
+
     const stateArrayInit = [];
     for (let i = 0; i < msgs.length; i++) {
       stateArrayInit.push(-1);

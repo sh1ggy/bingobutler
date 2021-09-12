@@ -22,12 +22,11 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
   if (!game) return {notFound: true}
   console.log(game);
   game._id = game._id.toHexString();
-  const gameSize = 3;
   var multiGame = [];
-  for (let i = 0; i < gameSize; i++) {
+  for (let i = 0; i < game.size; i++) {
     var innerArray = [];
-    for (let j = 0; j < gameSize; j++) {
-      var index = i * gameSize + j;
+    for (let j = 0; j < game.size; j++) {
+      var index = i * game.size + j;
       innerArray.push(game.data[index]);
       // console.log(i, j, game.data[j]);
     }
