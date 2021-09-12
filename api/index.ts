@@ -58,7 +58,7 @@ client.on('message', async msg => {
       if (m.content.startsWith("start")) return false;
       if (m.author.bot) return false;
       return true;
-    } 
+    }
     const msgs = (await msg.channel.messages.fetch()).filter(messageFilter).map((m) => m.content)
     shuffle(msgs);
     const diff = msgs.length - (size ** 2);
@@ -69,8 +69,8 @@ client.on('message', async msg => {
     let timerRef = setInterval(async () => {
       participantWaitCountdown--;
       await participateMsg.edit(`Please react to ✅ to participate in lockout (Finishes in ${participantWaitCountdown})`)
-    }, participantWaitCountdown*1000)
-    const msgReactions = await participateMsg.awaitReactions(reactionFilter, { max: 4, time: participantWaitCountdown*1000 });
+    }, participantWaitCountdown * 1000)
+    const msgReactions = await participateMsg.awaitReactions(reactionFilter, { max: 4, time: participantWaitCountdown * 1000 });
     await msg.delete();
     clearInterval(timerRef);
     let usersPing = "";
@@ -83,14 +83,14 @@ client.on('message', async msg => {
 
       timerRef = setTimeout(async () => {
         await participateMsg.delete();
-      }, deleteCountdown*1000)
+      }, deleteCountdown * 1000)
       return;
     }
     let participants = (await msgReactions.first().users.fetch()).filter(u => !u.bot);
     participants.forEach(u => usersPing += u.toString() + " ")
-    
+
     await participateMsg.delete();
-    
+
     let split = msg.content.split(" ");
     if (split.length == 2) {
       size = parseInt(split[1]);
@@ -103,28 +103,25 @@ client.on('message', async msg => {
     const gameId = (await db.collection("games").insertOne(dbObject)).insertedId.toHexString();
     console.log(gameId);
     const gameUrl = `http://localhost:3000/game/${gameId}`;
-    
-    
+
+
     const masterMsg = await msg.channel.send(`Times up! these are the contestants: ${usersPing}.\nAccess the game board here: ${gameUrl}`);
-    
+
     await db.collection("games").findOneAndUpdate(
       { _id: new ObjectId(gameId) },
       { $set: { masterMsgId: masterMsg.id, masterMsgChId: masterMsg.channel.id } },
     );
-    
+
   }
   if (msg.content === "clear") {
     const msgs = (await msg.channel.messages.fetch()).forEach(m => m.delete());
-  }
-  if (msg.content === "hydrate") {
-
   }
 })
 
 
 io.on("connection", (socket) => {
   console.log('a user connected');
-  
+
   socket.on('done', async ({ rt, index, gameId }) => {
     const user = await db.collection("users").findOne({ rt });
     // Unconventional method of editing array, relational and other forms dictate this needs to be [{ind: 0, val:0}.....]
@@ -139,7 +136,7 @@ io.on("connection", (socket) => {
     console.log(updateResult);
     const game = updateResult.value;
     if (!game) return;
-    
+
     const participantSums = game.participants.reduce((acc, val) => {
       acc[val] = 0;
       return acc;
@@ -155,9 +152,9 @@ io.on("connection", (socket) => {
     }
 
     const winCon = Math.ceil(game.state.length / game.participants.length)
-    console.log({winCon, participantSums});
-    
-    for (const[key, value] of Object.entries(participantSums)) {
+    console.log({ winCon, participantSums });
+
+    for (const [key, value] of Object.entries(participantSums)) {
       if (value >= winCon) {
         console.log(`${key} has won`);
         const winChannel = (await client.channels.fetch(game.masterMsgChId)) as Discord.TextChannel;
@@ -166,18 +163,18 @@ io.on("connection", (socket) => {
         await winChannel.send(`${winner.toString()} has won`)
         winMsg.delete();
         await db.collection("games").findOneAndDelete({
-          _id: new ObjectId(gameId) 
+          _id: new ObjectId(gameId)
         })
         const winnerPayload = {
           username: winner.username,
           id: winner.id,
         }
-        io.emit('gameDone', { winner: winnerPayload});
+        io.emit('gameDone', { winner: winnerPayload });
 
       }
     }
 
-    io.emit('sync', { state: game.state }, )
+    io.emit('sync', { state: game.state },)
   })
 
   socket.on('undo', async ({ rt, index, gameId }) => {
@@ -191,7 +188,7 @@ io.on("connection", (socket) => {
     );
     io.emit('sync', { state: game.state })
   })
-  
+
 
   socket.on('disconnect', () => {
     console.log('user disconnected');
@@ -245,7 +242,12 @@ app.get('/auth/callback', async (req, res) => {
   let user = await axios.get(resourceURL, resOptions)
   const payload = { ...user.data, rt: data.refresh_token }
 
-  await db.collection("users").insertOne(payload);
+  await db.collection("users").findOneAndReplace(
+    { id: payload.id },
+    payload,
+    { upsert: true }
+  )
+  // await db.collection("users").insertOne(payload);
 
   const backToLoginURL = 'http://localhost:3000/auth?rt=' + data.refresh_token;
   res.redirect(backToLoginURL);
