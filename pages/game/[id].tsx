@@ -18,7 +18,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const game = await db
     .collection("games")
     .findOne({ _id: new ObjectId(ctx.params.id.toString()) })
-
+  if (!game) return {notFound: true}
   console.log(game);
   game._id = game._id.toHexString();
   const gameSize = 3;
@@ -96,12 +96,12 @@ const Home: NextPage = ({ multiGame, game }) => {
         <h2>
           {gameWinner && `${gameWinner.username} has won`}
         </h2>  
-        <table className={`table-dark ${styles.thc} ${styles.table} col-12`}>
+        <table className={`table-dark ${styles.thc} ${styles.table} table-centered col-lg-12`}>
           <tbody>
             {multiGame.map((row, rowIndex) => (
               <tr>
                 {row.map((cell, index) => (
-                  <td className={`col-lg-4 ${completed[rowIndex * game.size + index] != -1 ? styles.clicked : styles.unclicked}`} onClick={() => onLock(rowIndex * game.size + index)}>
+                  <td className={`${completed[rowIndex * game.size + index] != -1 ? styles.clicked : styles.unclicked}`} onClick={() => onLock(rowIndex * game.size + index)}>
                     <p className={styles.unselectable}>{cell}</p>
                   </td>
                 ))}
