@@ -103,7 +103,27 @@ client.on('message', async msg => {
     for (let i = 0; i < msgs.length; i++) {
       stateArrayInit.push(-1);
     }
-    const dbObject = { participants: participants.map(u => u.id), data: msgs, channelId: msg.channel.id, size: size, state: stateArrayInit };
+
+    const participantsPayload = participants.map(u=> {
+      const hsl = {
+        h: Math.random()* 360,
+        s: 0.4,
+        l: 0.6
+      }
+      return {
+        hsl, 
+        id: u.id,
+        username: u.username
+      } 
+    })
+
+    const dbObject = {
+      participants: participantsPayload,
+      data: msgs,
+      channelId: msg.channel.id,
+      size: size,
+      state: stateArrayInit
+    };
     const gameId = (await db.collection("games").insertOne(dbObject)).insertedId.toHexString();
     console.log(gameId);
     const gameUrl = `http://localhost:3000/game/${gameId}`;
@@ -122,7 +142,6 @@ client.on('message', async msg => {
   }
 })
 
-
 io.on("connection", (socket) => {
   console.log('a user connected');
 
@@ -132,17 +151,16 @@ io.on("connection", (socket) => {
     // Access array & do checks & TODO: replace full array instead 
     const access = 'state.' + index;
 
-    const updateResult = await db.collection("games").findOneAndUpdate(
+    const {value: game} = await db.collection("games").findOneAndUpdate(
       { _id: new ObjectId(gameId) },
       { $set: { [access]: user.id } },
       { returnDocument: 'after' }
     );
-    console.log(updateResult);
-    const game = updateResult.value;
     if (!game) return;
 
+
     const participantSums = game.participants.reduce((acc, val) => {
-      acc[val] = 0;
+      acc[val.id] = 0;
       return acc;
     }, {});
 
@@ -162,18 +180,14 @@ io.on("connection", (socket) => {
       if (value >= winCon) {
         console.log(`${key} has won`);
         const winChannel = (await client.channels.fetch(game.masterMsgChId)) as Discord.TextChannel;
-        const winMsg = await winChannel.messages.fetch(game.masterMsgId);
+        const masterMsg = await winChannel.messages.fetch(game.masterMsgId);
         const winner = await client.users.fetch(key);
         await winChannel.send(`${winner.toString()} has won`)
-        winMsg.delete();
+        masterMsg.delete();
         await db.collection("games").findOneAndDelete({
           _id: new ObjectId(gameId)
         })
-        const winnerPayload = {
-          username: winner.username,
-          id: winner.id,
-        }
-        io.emit('gameDone', { winner: winnerPayload });
+        io.emit('gameDone', { winner: game.participants.find((p)=> p.id == key) });
 
       }
     }
