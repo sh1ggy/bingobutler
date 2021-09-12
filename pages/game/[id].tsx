@@ -71,17 +71,14 @@ const Home: NextPage = ({ multiGame, game }) => {
   }, []);
 
   function onLock(index) {
-    // let tempCompleted = [...completed];
-    // tempCompleted[index] = !tempCompleted[index];
-    // setCompleted(tempCompleted)
+
     console.log(completed);
     if (user.id == completed[index]) {
       io.current.emit('undo', { rt: user.rt, index, gameId: game._id });
       return;
     }
+    if (completed[index] !=-1) return;
     io.current.emit('done', { rt: user.rt, index, gameId: game._id });
-
-    return;
   }
   let userColor = '';
   if (!user) {userColor = 'teal'}

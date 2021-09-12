@@ -2,7 +2,7 @@ require('dotenv').config();
 import Discord, { CollectorFilter, Message } from "discord.js";
 import express from 'express';
 import { createServer } from 'http';
-import { Server } from 'socket.io'
+import { Server, Namespace } from 'socket.io'
 import cors from 'cors';
 import { connectToDatabase } from '../lib/db';
 import { Db, MongoDBNamespace, ObjectId } from 'mongodb';
@@ -146,6 +146,9 @@ client.on('message', async msg => {
     console.log(gameId);
     const gameUrl = `http://localhost:3000/game/${gameId}`;
 
+    //io
+    const sock = io.of('/'+gameId);
+
 
     const masterMsg = await msg.channel.send(`Times up! these are the contestants: ${usersPing}.\nAccess the game board here: ${gameUrl}`);
 
@@ -160,61 +163,64 @@ client.on('message', async msg => {
   }
 })
 
+
+const doneHandlerFactory = (sock: Server)=> async ({ rt, index, gameId }) => {
+  let game = await db.collection("games").findOne(
+    { _id: new ObjectId(gameId) },
+  )
+  if (!game) return;
+  const user = await db.collection("users").findOne({ rt });
+  if (!game.participants.some((p) => p.id == user.id)) return;
+  // Unconventional method of editing array, relational and other forms dictate this needs to be [{ind: 0, val:0}.....]
+  // Access array & do checks & TODO: replace full array instead 
+  const access = 'state.' + index;
+  game = (await db.collection("games").findOneAndUpdate(
+    { _id: new ObjectId(gameId) },
+    { $set: { [access]: user.id } },
+    { returnDocument: 'after' }
+  )).value;
+    
+
+  const participantSums = game.participants.reduce((acc, val) => {
+    acc[val.id] = 0;
+    return acc;
+  }, {});
+
+  for (let i = 0; i < game.state.length; i++) {
+    if (game.state[i] == -1) continue;
+    Object.keys(participantSums).forEach((pKey) => {
+      if (game.state[i] == pKey) {
+        participantSums[pKey]++;
+      }
+    })
+  }
+
+  const winCon = Math.ceil(game.state.length / game.participants.length)
+  console.log({ winCon, participantSums });
+
+  for (const [key, value] of Object.entries(participantSums)) {
+    if (value >= winCon) {
+      console.log(`${key} has won`);
+      const winChannel = (await client.channels.fetch(game.masterMsgChId)) as Discord.TextChannel;
+      const masterMsg = await winChannel.messages.fetch(game.masterMsgId);
+      const winner = await client.users.fetch(key);
+      await winChannel.send(`${winner.toString()} has won`)
+      masterMsg.delete();
+      await db.collection("games").findOneAndDelete({
+        _id: new ObjectId(gameId)
+      })
+      sock.emit('gameDone', { winner: game.participants.find((p) => p.id == key) });
+
+    }
+  }
+
+  sock.emit('sync', { state: game.state },)
+}
+
 io.on("connection", (socket) => {
   console.log('a user connected');
-
-  socket.on('done', async ({ rt, index, gameId }) => {
-    let game = await db.collection("games").findOne(
-      { _id: new ObjectId(gameId) },
-    )
-    if (!game) return;
-    const user = await db.collection("users").findOne({ rt });
-    if (!game.participants.some((p) => p.id == user.id)) return;
-    // Unconventional method of editing array, relational and other forms dictate this needs to be [{ind: 0, val:0}.....]
-    // Access array & do checks & TODO: replace full array instead 
-    const access = 'state.' + index;
-    game = (await db.collection("games").findOneAndUpdate(
-      { _id: new ObjectId(gameId) },
-      { $set: { [access]: user.id } },
-      { returnDocument: 'after' }
-    )).value;
-      
-
-    const participantSums = game.participants.reduce((acc, val) => {
-      acc[val.id] = 0;
-      return acc;
-    }, {});
-
-    for (let i = 0; i < game.state.length; i++) {
-      if (game.state[i] == -1) continue;
-      Object.keys(participantSums).forEach((pKey) => {
-        if (game.state[i] == pKey) {
-          participantSums[pKey]++;
-        }
-      })
-    }
-
-    const winCon = Math.ceil(game.state.length / game.participants.length)
-    console.log({ winCon, participantSums });
-
-    for (const [key, value] of Object.entries(participantSums)) {
-      if (value >= winCon) {
-        console.log(`${key} has won`);
-        const winChannel = (await client.channels.fetch(game.masterMsgChId)) as Discord.TextChannel;
-        const masterMsg = await winChannel.messages.fetch(game.masterMsgId);
-        const winner = await client.users.fetch(key);
-        await winChannel.send(`${winner.toString()} has won`)
-        masterMsg.delete();
-        await db.collection("games").findOneAndDelete({
-          _id: new ObjectId(gameId)
-        })
-        io.emit('gameDone', { winner: game.participants.find((p) => p.id == key) });
-
-      }
-    }
-
-    io.emit('sync', { state: game.state },)
-  })
+  const handler = doneHandlerFactory(io);
+  socket.on('done', handler);
 
   socket.on('undo', async ({ rt, index, gameId }) => {
     const user = await db.collection("users").findOne({ rt });
