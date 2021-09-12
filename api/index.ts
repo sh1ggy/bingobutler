@@ -49,7 +49,7 @@ client.on('message', async msg => {
     msg.reply('pong');
   }
   if (msg.content.startsWith('start')) {
-    const participantWaitTimer = 10;
+    const participantWaitTimer = 5;
     const deleteWaitTimer = 3;
     const msgSize = 3;
     let size = msgSize;
@@ -68,11 +68,11 @@ client.on('message', async msg => {
     const diff = msgs.length - (size ** 2);
     if (diff > 0) msgs.splice(-diff, diff);
     let participantWaitCountdown = participantWaitTimer;
-    const participateMsg = await msg.channel.send(`Please react to ✅ to participate in lockout`);
+    const participateMsg = await msg.channel.send(`Please react to ✅ to participate in lockout.\nMake sure your terms are listed beforehand`);
     await participateMsg.react("✅");
     let timerRef = setInterval(async () => {
       participantWaitCountdown--;
-      await participateMsg.edit(`Please react to ✅ to participate in lockout (Finishes in ${participantWaitCountdown})`)
+      await participateMsg.edit(`Please react to ✅ to participate in lockout (Finishes in ${participantWaitCountdown})`);
     }, participantWaitCountdown * 1000)
     const msgReactions = await participateMsg.awaitReactions(reactionFilter, { max: 4, time: participantWaitCountdown * 1000 });
     await msg.delete();
@@ -146,17 +146,20 @@ io.on("connection", (socket) => {
   console.log('a user connected');
 
   socket.on('done', async ({ rt, index, gameId }) => {
+    let game = await db.collection("games").findOne(
+      { _id: new ObjectId(gameId) },
+    )
+    if (!game) return;
     const user = await db.collection("users").findOne({ rt });
+    if (!game.participants.some((p) => p.id == user.id)) return;
     // Unconventional method of editing array, relational and other forms dictate this needs to be [{ind: 0, val:0}.....]
     // Access array & do checks & TODO: replace full array instead 
     const access = 'state.' + index;
-    const {value: game} = await db.collection("games").findOneAndUpdate(
+    game = (await db.collection("games").findOneAndUpdate(
       { _id: new ObjectId(gameId) },
       { $set: { [access]: user.id } },
       { returnDocument: 'after' }
-      );
-      if (!game) return;
-      if (!game.participants.includes(user.id)) return;
+    )).value;
       
 
     const participantSums = game.participants.reduce((acc, val) => {
