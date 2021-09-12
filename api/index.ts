@@ -164,7 +164,7 @@ client.on('message', async msg => {
 })
 
 
-const doneHandlerFactory = (sock: Server)=> async ({ rt, index, gameId }) => {
+const doneHandlerFactory = (sock: Server | Namespace)=> async ({ rt, index, gameId }) => {
   let game = await db.collection("games").findOne(
     { _id: new ObjectId(gameId) },
   )
@@ -217,24 +217,24 @@ const doneHandlerFactory = (sock: Server)=> async ({ rt, index, gameId }) => {
   sock.emit('sync', { state: game.state },)
 }
 
+const undohandlerFactory = (sock: Server | Namespace) =>  async ({ rt, index, gameId }) => {
+  const user = await db.collection("users").findOne({ rt });
+  // Unconventional method of editing array, relational and other forms dictate this needs to be [{ind: 0, val:0}.....]
+  const access = 'state.' + index;
+  const { value: game } = await db.collection("games").findOneAndUpdate(
+    { _id: new ObjectId(gameId) },
+    { $set: { [access]: -1 } },
+    { returnDocument: 'after' }
+  );
+  sock.emit('sync', { state: game.state })
+}
+
 io.on("connection", (socket) => {
   console.log('a user connected');
   const handler = doneHandlerFactory(io);
   socket.on('done', handler);
-
-  socket.on('undo', async ({ rt, index, gameId }) => {
-    const user = await db.collection("users").findOne({ rt });
-    // Unconventional method of editing array, relational and other forms dictate this needs to be [{ind: 0, val:0}.....]
-    const access = 'state.' + index;
-    const { value: game } = await db.collection("games").findOneAndUpdate(
-      { _id: new ObjectId(gameId) },
-      { $set: { [access]: -1 } },
-      { returnDocument: 'after' }
-    );
-    io.emit('sync', { state: game.state })
-  })
-
-
+  const undohandler = undohandlerFactory(io);
+  socket.on('undo',undohandler);
   socket.on('disconnect', () => {
     console.log('user disconnected');
   });
