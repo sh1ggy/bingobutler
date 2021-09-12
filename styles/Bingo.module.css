@@ -22,6 +22,7 @@
     /* background-color: teal; */
     border-collapse: collapse;
     margin-top: 2rem;
+    min-width: 10vw;
 }
 
 .thc > tbody > tr > td:hover {
