@@ -41,6 +41,20 @@ function shuffle(arr: string[]) {
   }
 }
 
+// function createTimer(msg: Message, startTime: number) {
+//   return new Promise((res)=> {
+//     let participantWaitCountdown = startTime;
+//     let timerRef = setInterval(async () => {
+//       participantWaitCountdown--;
+//       await msg.edit(`Please react to ✅ to participate in lockout (Finishes in ${participantWaitCountdown})`)
+//       if (participantWaitCountdown<=0) {
+//         clearInterval(timerRef);
+//         res(null);
+//       }
+//     }, participantWaitCountdown * 1000)
+//   })
+// }
+
 client.on('message', async msg => {
   if (msg.channel.type == 'dm') return;
   if (msg.channel.type == "news") return;
@@ -73,7 +87,7 @@ client.on('message', async msg => {
     let timerRef = setInterval(async () => {
       participantWaitCountdown--;
       await participateMsg.edit(`Please react to ✅ to participate in lockout (Finishes in ${participantWaitCountdown})`)
-    }, participantWaitCountdown * 1000)
+    }, 1000)
     const msgReactions = await participateMsg.awaitReactions(reactionFilter, { max: 4, time: participantWaitCountdown * 1000 });
     await msg.delete();
     clearInterval(timerRef);
