@@ -2,12 +2,13 @@ import type { NextPage } from 'next'
 import Image from 'next/image'
 import styles from '../../styles/Bingo.module.css'
 import { connectToDatabase } from '../../lib/db'
-import { ObjectId } from 'mongodb'
+import { ListCollectionsCursor, ObjectId } from 'mongodb'
 import { useContext, useEffect, useRef, useState } from 'react'
 import socket from 'socket.io-client';
 import { GetServerSideProps } from 'next'
 import { useRouter } from 'next/dist/client/router'
 import { UserContext } from '../_app'
+import { User } from 'discord.js'
 
 const URL = "http://localhost:3001";
 
@@ -46,6 +47,7 @@ const Home: NextPage = ({ multiGame, game }) => {
   const router = useRouter();
   const { user, setUser } = useContext(UserContext)
   useEffect(() => {
+    setCompleted(game.state);
     const localUser = localStorage.getItem("user");
     if (!localUser) {
       localStorage.setItem("bookmark", game._id);
@@ -70,7 +72,6 @@ const Home: NextPage = ({ multiGame, game }) => {
     // for (let i = 0; i < game.data.length; i++) {
     //   tempCompleted.push(false);
     // }
-    setCompleted(game.state);
   }, []);
 
   function onLock(index) {
@@ -96,15 +97,30 @@ const Home: NextPage = ({ multiGame, game }) => {
         <h2>
           {gameWinner && `${gameWinner.username} has won`}
         </h2>  
-        <table className={`table-dark ${styles.thc} ${styles.table} table-centered col-lg-12`}>
+        <table className={`table-dark ${styles.thc} table-centered col-lg-12`}>
           <tbody>
             {multiGame.map((row, rowIndex) => (
               <tr>
-                {row.map((cell, index) => (
-                  <td className={`${completed[rowIndex * game.size + index] != -1 ? styles.clicked : styles.unclicked}`} onClick={() => onLock(rowIndex * game.size + index)}>
-                    <p className={styles.unselectable}>{cell}</p>
-                  </td>
-                ))}
+                {row.map((cell, index) => {
+                  let color = "teal";
+                  const flatIndex = rowIndex * game.size + index;
+                  if (completed.length != 0) {
+                    // console.log({game, completed});
+                    const userId = completed[flatIndex];
+                    if (userId != -1) {
+                      const user = game.participants.find((user) => userId == user.id);
+                      color = `hsl(${user.hsl.h}, ${Math.floor(user.hsl.s * 100)}%, ${Math.floor(user.hsl.l * 100)}%)` 
+                      console.log({user, userId, color})
+
+                    } 
+                  } 
+                  return (
+                    //className={`${completed[rowIndex * game.size + index] != -1 ? styles.clicked : styles.unclicked}`}
+                    <td style={{backgroundColor: color}} onClick={() => onLock(flatIndex)}>
+                      <p className={styles.unselectable}>{cell}</p>
+                    </td>
+                  )
+                })}
               </tr>
             ))}
           </tbody>
