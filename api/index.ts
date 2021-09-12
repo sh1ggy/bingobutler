@@ -150,14 +150,14 @@ io.on("connection", (socket) => {
     // Unconventional method of editing array, relational and other forms dictate this needs to be [{ind: 0, val:0}.....]
     // Access array & do checks & TODO: replace full array instead 
     const access = 'state.' + index;
-
     const {value: game} = await db.collection("games").findOneAndUpdate(
       { _id: new ObjectId(gameId) },
       { $set: { [access]: user.id } },
       { returnDocument: 'after' }
-    );
-    if (!game) return;
-
+      );
+      if (!game) return;
+      if (!game.participants.includes(user.id)) return;
+      
 
     const participantSums = game.participants.reduce((acc, val) => {
       acc[val.id] = 0;
