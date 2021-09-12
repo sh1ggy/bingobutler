@@ -82,11 +82,11 @@ client.on('message', async msg => {
     const diff = msgs.length - (size ** 2);
     if (diff > 0) msgs.splice(-diff, diff);
     let participantWaitCountdown = participantWaitTimer;
-    const participateMsg = await msg.channel.send(`Please react to ✅ to participate in lockout.\nMake sure your terms are listed beforehand`);
+    const participateMsg = await msg.channel.send(`Please react to ✅ to participate in lockout.\nMake sure your terms are listed beforehand.`);
     await participateMsg.react("✅");
     let timerRef = setInterval(async () => {
       participantWaitCountdown--;
-      await participateMsg.edit(`Please react to ✅ to participate in lockout (Finishes in ${participantWaitCountdown})`)
+      await participateMsg.edit(`Please react to ✅ to participate in lockout (Finishes in ${participantWaitCountdown})\nMake sure your terms are listed beforehand.`)
     }, 1000)
     const msgReactions = await participateMsg.awaitReactions(reactionFilter, { max: 4, time: participantWaitCountdown * 1000 });
     await msg.delete();

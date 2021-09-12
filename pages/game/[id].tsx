@@ -45,7 +45,8 @@ const Home: NextPage = ({ multiGame, game }) => {
   const [gameWinner, setGameWinner] = useState<any>(false);
   const io = useRef(null);
   const router = useRouter();
-  const { user, setUser } = useContext(UserContext)
+  const { user, setUser } = useContext(UserContext);
+  
   useEffect(() => {
     setCompleted(game.state);
     const localUser = localStorage.getItem("user");
@@ -67,11 +68,6 @@ const Home: NextPage = ({ multiGame, game }) => {
     io.current.on('gameDone', (data) => {
       setGameWinner(data.winner);
     })
-
-    // let tempCompleted = [];
-    // for (let i = 0; i < game.data.length; i++) {
-    //   tempCompleted.push(false);
-    // }
   }, []);
 
   function onLock(index) {
@@ -87,9 +83,16 @@ const Home: NextPage = ({ multiGame, game }) => {
 
     return;
   }
+  let userColor = '';
+  if (!user) {userColor = 'teal'}
+  else {
+    const participant = game.participants.find((participant) => user.id == participant.id);
+    userColor = `hsl(${participant.hsl.h}, ${Math.floor(participant.hsl.s * 100)}%, ${Math.floor(participant.hsl.l * 100)}%)` 
+  }
+
 
   return (
-    <div className="container">
+    <div className={styles.container} style={{backgroundColor: userColor}}>
       <main className={styles.main}>
         <h1 className={styles.title}>
           Bingo Butler
@@ -97,7 +100,7 @@ const Home: NextPage = ({ multiGame, game }) => {
         <h2>
           {gameWinner && `${gameWinner.username} has won`}
         </h2>  
-        <table className={`table-dark ${styles.thc} table-centered col-lg-12`}>
+        <table className={`table-dark ${styles.table} ${styles.thc} table-centered col-12`}>
           <tbody>
             {multiGame.map((row, rowIndex) => (
               <tr>
@@ -110,8 +113,7 @@ const Home: NextPage = ({ multiGame, game }) => {
                     if (userId != -1) {
                       const user = game.participants.find((user) => userId == user.id);
                       color = `hsl(${user.hsl.h}, ${Math.floor(user.hsl.s * 100)}%, ${Math.floor(user.hsl.l * 100)}%)` 
-                      console.log({user, userId, color})
-
+                      // console.log({user, userId, color})
                     } 
                   } 
                   return (
@@ -125,6 +127,11 @@ const Home: NextPage = ({ multiGame, game }) => {
             ))}
           </tbody>
         </table>
+
+        <div style={{backgroundColor: 'red'}}>
+          
+        </div>
+
       </main>
     </div>
   )
