@@ -59,7 +59,10 @@ const Home: NextPage = ({ multiGame, game }) => {
     setUser(JSON.parse(localUser));
 
     // handling socket TODO in room
-    io.current = socket(URL + "/" + game._id);
+    io.current = socket(URL, {
+      transports: ["websocket"]
+    });
+    io.current.emit("joinRoom", game._id);
     io.current.on('sync', (data) => {
       setCompleted(data.state);
       console.log(data)
@@ -80,6 +83,7 @@ const Home: NextPage = ({ multiGame, game }) => {
     if (completed[index] !=-1) return;
     io.current.emit('done', { rt: user.rt, index, gameId: game._id });
   }
+  
   let userColor = '';
   if (!user) {userColor = 'teal'}
   else {
