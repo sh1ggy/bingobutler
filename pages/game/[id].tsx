@@ -18,7 +18,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const game = await db
     .collection("games")
     .findOne({ _id: new ObjectId(ctx.params.id.toString()) })
-  if (!game) return {notFound: true}
+  if (!game) return { notFound: true }
   console.log(game);
   game._id = game._id.toHexString();
   var multiGame = [];
@@ -44,7 +44,7 @@ const Home: NextPage = ({ multiGame, game }) => {
   const io = useRef(null);
   const router = useRouter();
   const { user, setUser } = useContext(UserContext);
-  
+
   useEffect(() => {
     setCompleted(game.state);
     const localUser = localStorage.getItem("user");
@@ -77,28 +77,28 @@ const Home: NextPage = ({ multiGame, game }) => {
       io.current.emit('undo', { rt: user.rt, index, gameId: game._id });
       return;
     }
-    if (completed[index] !=-1) return;
+    if (completed[index] != -1) return;
     io.current.emit('done', { rt: user.rt, index, gameId: game._id });
   }
-  
+
   let userColor = '';
-  if (!user) {userColor = 'teal'}
+  if (!user) { userColor = 'teal' }
   else {
     const participant = game.participants.find((participant) => user.id == participant.id);
-    userColor = `hsl(${participant.hsl.h}, ${Math.floor(participant.hsl.s * 100)}%, ${Math.floor(participant.hsl.l * 100)}%)` 
+    userColor = `hsl(${participant.hsl.h}, ${Math.floor(participant.hsl.s * 100)}%, ${Math.floor(participant.hsl.l * 100)}%)`
   }
 
 
   return (
-    <div className={styles.container} style={{backgroundColor: userColor}}>
+    <div className={styles.container} style={{ backgroundColor: userColor }}>
       <main className={styles.main}>
         <h1 className={styles.title}>
           Bingo Butler
-        </h1> 
+        </h1>
         <table className={`table-dark ${styles.table} ${styles.thc} table-centered col-12`}>
           <tbody>
             {multiGame.map((row, rowIndex) => (
-              <tr>
+              <tr key={rowIndex}>
                 {row.map((cell, index) => {
                   let color = "teal";
                   const flatIndex = rowIndex * game.size + index;
@@ -107,13 +107,13 @@ const Home: NextPage = ({ multiGame, game }) => {
                     const userId = completed[flatIndex];
                     if (userId != -1) {
                       const user = game.participants.find((user) => userId == user.id);
-                      color = `hsl(${user.hsl.h}, ${Math.floor(user.hsl.s * 100)}%, ${Math.floor(user.hsl.l * 100)}%)` 
+                      color = `hsl(${user.hsl.h}, ${Math.floor(user.hsl.s * 100)}%, ${Math.floor(user.hsl.l * 100)}%)`
                       // console.log({user, userId, color})
-                    } 
-                  } 
+                    }
+                  }
                   return (
                     //className={`${completed[rowIndex * game.size + index] != -1 ? styles.clicked : styles.unclicked}`}
-                    <td style={{backgroundColor: color}} onClick={() => onLock(flatIndex)}>
+                    <td key={flatIndex} style={{ backgroundColor: color }} onClick={() => onLock(flatIndex)}>
                       <p className={styles.unselectable}>{cell}</p>
                     </td>
                   )
@@ -124,9 +124,9 @@ const Home: NextPage = ({ multiGame, game }) => {
         </table>
 
         <div>
-        <h2>
-          {gameWinner && `${gameWinner.username} has won`}
-        </h2> 
+          <h2>
+            {gameWinner && `${gameWinner.username} has won`}
+          </h2>
         </div>
 
       </main>

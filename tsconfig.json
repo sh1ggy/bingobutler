@@ -7,10 +7,11 @@
       "esnext"
     ],
     "allowJs": true,
+    // "outFile": "./",                       /* Concatenate and emit output to single file. */
+    "outDir": "./build", /* Redirect output structure to the directory. */
     "skipLibCheck": true,
     "strict": false,
     "forceConsistentCasingInFileNames": true,
-    "noEmit": true,
     "esModuleInterop": true,
     // "module": "esnext",
     "module": "commonjs",
@@ -28,6 +29,7 @@
     "**/*.tsx"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "build"
   ]
 }

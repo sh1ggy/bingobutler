@@ -14,7 +14,7 @@ const io = new Server(http, {
 });
 app.use(cors());
 let db: Db;
-const callback_url = 'http://127.0.0.1:3001/auth/callback'
+const callback_url = process.env.NODE_ENV === "production" ? "https://bb.kongroo.xyz/auth/callback": 'http://127.0.0.1:3001/auth/callback';
 
 export const client = new Discord.Client();
 // let db: Db;
