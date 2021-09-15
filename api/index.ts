@@ -16,7 +16,7 @@ app.use(cors());
 let db: Db;
 const callback_url = 'http://127.0.0.1:3001/auth/callback'
 
-const client = new Discord.Client();
+export const client = new Discord.Client();
 // let db: Db;
 
 export const reactionFilter: CollectorFilter = (reaction, user) => {

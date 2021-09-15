@@ -8,7 +8,6 @@ import socket from 'socket.io-client';
 import { GetServerSideProps } from 'next'
 import { useRouter } from 'next/dist/client/router'
 import { UserContext } from '../_app'
-import { User } from 'discord.js'
 
 const URL = "http://localhost:3001";
 
