@@ -243,6 +243,11 @@ io.on("connection", (socket) => {
   });
 });
 
+app.get('/serverInfo', (req, res)=> {
+  const serverCount = client.guilds.cache.size;
+  res.json({serverCount});
+})
+
 app.get('/login', (req, res) => {
   return res.redirect(
     'https://discordapp.com/api/oauth2/authorize' +
