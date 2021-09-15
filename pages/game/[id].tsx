@@ -8,9 +8,8 @@ import socket from 'socket.io-client';
 import { GetServerSideProps } from 'next'
 import { useRouter } from 'next/dist/client/router'
 import { UserContext } from '../_app'
-import { User } from 'discord.js'
+import { SERVER_URL } from '../../lib/constants'
 
-const URL = "http://localhost:3001";
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   // const res = await fetch(`https://bb.kongroo.xyz/${bingo}`);
@@ -51,14 +50,16 @@ const Home: NextPage = ({ multiGame, game }) => {
     const localUser = localStorage.getItem("user");
     if (!localUser) {
       localStorage.setItem("bookmark", game._id);
-      const loginURL = 'http://localhost:3001/login'
-      router.push(loginURL);
+      router.push(SERVER_URL + '/login');
       return;
     }
     setUser(JSON.parse(localUser));
 
     // handling socket TODO in room
-    io.current = socket(URL);
+    io.current = socket(SERVER_URL, {
+      transports: ["websocket"]
+    });
+    io.current.emit("joinRoom", game._id);
     io.current.on('sync', (data) => {
       setCompleted(data.state);
       console.log(data)
@@ -79,6 +80,7 @@ const Home: NextPage = ({ multiGame, game }) => {
     if (completed[index] !=-1) return;
     io.current.emit('done', { rt: user.rt, index, gameId: game._id });
   }
+  
   let userColor = '';
   if (!user) {userColor = 'teal'}
   else {

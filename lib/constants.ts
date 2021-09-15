@@ -1,0 +1,1 @@
+export const SERVER_URL =  process.env.NODE_ENV === "production" ? "https://bb.kongroo.xyz" : "http://localhost:3001";

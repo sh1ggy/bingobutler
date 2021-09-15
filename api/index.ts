@@ -16,7 +16,7 @@ app.use(cors());
 let db: Db;
 const callback_url = 'http://127.0.0.1:3001/auth/callback'
 
-const client = new Discord.Client();
+export const client = new Discord.Client();
 // let db: Db;
 
 export const reactionFilter: CollectorFilter = (reaction, user) => {
@@ -88,12 +88,12 @@ client.on('message', async msg => {
     let participantWaitCountdown = participantWaitTimer;
     const participateMsg = await msg.channel.send(`Please react to ✅ to participate in lockout.\nMake sure your terms are listed beforehand.`);
     await participateMsg.react("✅");
+    await msg.delete();
     let timerRef = setInterval(async () => {
       participantWaitCountdown--;
       await participateMsg.edit(`Please react to ✅ to participate in lockout (Finishes in ${participantWaitCountdown})\nMake sure your terms are listed beforehand.`)
     }, 1000)
     const msgReactions = await participateMsg.awaitReactions(reactionFilter, { max: 4, time: participantWaitCountdown * 1000 });
-    await msg.delete();
     clearInterval(timerRef);
     let usersPing = "";
     console.log(msgReactions.size);
@@ -147,10 +147,6 @@ client.on('message', async msg => {
     console.log(gameId);
     const gameUrl = `http://localhost:3000/game/${gameId}`;
 
-    //io
-    const sock = io.of('/'+gameId);
-
-
     const masterMsg = await msg.channel.send(`Times up! these are the contestants: ${usersPing}.\nAccess the game board here: ${gameUrl}`);
 
     await db.collection("games").findOneAndUpdate(
@@ -165,7 +161,9 @@ client.on('message', async msg => {
 })
 
 
-const doneHandlerFactory = (sock: Server | Namespace)=> async ({ rt, index, gameId }) => {
+const doneHandlerFactory = (gameId: string) => async (payload) => {
+  console.log(payload)
+  const { rt, index } = payload;
   let game = await db.collection("games").findOne(
     { _id: new ObjectId(gameId) },
   )
@@ -180,7 +178,7 @@ const doneHandlerFactory = (sock: Server | Namespace)=> async ({ rt, index, game
     { $set: { [access]: user.id } },
     { returnDocument: 'after' }
   )).value;
-    
+
 
   const participantSums = game.participants.reduce((acc, val) => {
     acc[val.id] = 0;
@@ -197,28 +195,27 @@ const doneHandlerFactory = (sock: Server | Namespace)=> async ({ rt, index, game
   }
 
   const winCon = Math.ceil(game.state.length / game.participants.length)
-  console.log({ winCon, participantSums });
 
   for (const [key, value] of Object.entries(participantSums)) {
     if (value >= winCon) {
-      console.log(`${key} has won`);
+      console.log(`${key} has won game: ${game._id}`);
       const winChannel = (await client.channels.fetch(game.masterMsgChId)) as Discord.TextChannel;
       const masterMsg = await winChannel.messages.fetch(game.masterMsgId);
       const winner = await client.users.fetch(key);
       await winChannel.send(`${winner.toString()} has won`)
-      masterMsg.delete();
+      await masterMsg.delete();
       await db.collection("games").findOneAndDelete({
         _id: new ObjectId(gameId)
       })
-      sock.emit('gameDone', { winner: game.participants.find((p) => p.id == key) });
+      io.to(gameId).emit('gameDone', { winner: game.participants.find((p) => p.id == key) });
 
     }
   }
 
-  sock.emit('sync', { state: game.state },)
+  io.to(gameId).emit('sync', { state: game.state })
 }
 
-const undohandlerFactory = (sock: Server | Namespace) =>  async ({ rt, index, gameId }) => {
+const undohandlerFactory = (gameId: string) => async ({ rt, index }) => {
   const user = await db.collection("users").findOne({ rt });
   // Unconventional method of editing array, relational and other forms dictate this needs to be [{ind: 0, val:0}.....]
   const access = 'state.' + index;
@@ -227,19 +224,30 @@ const undohandlerFactory = (sock: Server | Namespace) =>  async ({ rt, index, ga
     { $set: { [access]: -1 } },
     { returnDocument: 'after' }
   );
-  sock.emit('sync', { state: game.state })
+  io.to(gameId).emit('sync', { state: game.state })
 }
+
 
 io.on("connection", (socket) => {
   console.log('a user connected');
-  const handler = doneHandlerFactory(io);
-  socket.on('done', handler);
-  const undohandler = undohandlerFactory(io);
-  socket.on('undo',undohandler);
+  socket.on("joinRoom", (roomId) => {
+    console.log("joining room" + roomId);
+    socket.join(roomId);
+    const handler = doneHandlerFactory(roomId);
+    socket.on('done', handler);
+    const undohandler = undohandlerFactory(roomId);
+    socket.on('undo', undohandler);
+  })
+
   socket.on('disconnect', () => {
     console.log('user disconnected');
   });
 });
+
+app.get('/serverInfo', (req, res)=> {
+  const serverCount = client.guilds.cache.size;
+  res.json({serverCount});
+})
 
 app.get('/login', (req, res) => {
   return res.redirect(
