@@ -14,7 +14,7 @@ const io = new Server(http, {
 });
 app.use(cors());
 let db: Db;
-const callback_url = process.env.NODE_ENV === "production" ? "https://bb.kongroo.xyz/auth/callback": 'http://127.0.0.1:3001/auth/callback';
+const SERVER_URL = process.env.NODE_ENV === "production" ? "https://bb.kongroo.xyz": 'http://127.0.0.1:3001';
 
 export const client = new Discord.Client();
 // let db: Db;
@@ -145,7 +145,7 @@ client.on('message', async msg => {
     };
     const gameId = (await db.collection("games").insertOne(dbObject)).insertedId.toHexString();
     console.log(gameId);
-    const gameUrl = `http://localhost:3000/game/${gameId}`;
+    const gameUrl = `${SERVER_URL}/game/${gameId}`;
 
     const masterMsg = await msg.channel.send(`Times up! these are the contestants: ${usersPing}.\nAccess the game board here: ${gameUrl}`);
 
@@ -254,7 +254,7 @@ app.get('/login', (req, res) => {
     'https://discordapp.com/api/oauth2/authorize' +
     '?client_id=' + process.env.CLIENT_ID +
     '&redirect_uri=' +
-    encodeURIComponent(callback_url) +
+    encodeURIComponent(SERVER_URL + "/auth/callback") +
     '&response_type=code' +
     '&scope=identify%20email'
   );
@@ -266,7 +266,7 @@ app.get('/auth/callback', async (req, res) => {
   params.append("client_id", process.env.CLIENT_ID)
   params.append("client_secret", process.env.CLIENT_SECRET)
   params.append("grant_type", 'authorization_code')
-  params.append("redirect_uri", callback_url)
+  params.append("redirect_uri", SERVER_URL + "/auth/callback")
   params.append("scope", 'identify email')
   params.append("code", code.toString())
 
