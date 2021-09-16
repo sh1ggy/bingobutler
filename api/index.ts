@@ -156,7 +156,8 @@ client.on('message', async msg => {
 
   }
   if (msg.content === "clear") {
-    const msgs = (await msg.channel.messages.fetch()).forEach(m => m.delete());
+    Promise.all((await msg.channel.messages.fetch()).filter(m=>m.author.bot).map(m => m.delete()));
+    await msg.delete();
   }
 })
 

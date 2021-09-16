@@ -11,6 +11,7 @@
     "api": "nodemon --exec ts-node api/index.ts",
     "apibuild": "rm -rf build && tsc --noEmit false",
     "pm2": "NODE_ENV=production pm2 delete bingobot; pm2 start build/api/index.js --name bingobot",
+    "server": "npm run apibuild && npm run pm2",
     "prod": "NODE_ENV=production node build/api/index.js",
     "prodwin": "set NODE_ENV=production && node build/api/index.js"
   },
