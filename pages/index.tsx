@@ -31,7 +31,8 @@ const Home: NextPage = ({ serverData }) => {
           <h2>The bot and api are likely down right now :(</h2>
         }
       </main>
-
+      Invite our bot:
+<a>https://discord.com/oauth2/authorize?client_id=885845871105806386&permissions=0&scope=bot%20applications.commands</a>
 
     </div>
   )

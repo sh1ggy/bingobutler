@@ -63,6 +63,7 @@ client.on('message', async msg => {
     msg.reply('pong');
   }
   if (msg.content.startsWith('start')) {
+    let canDelete = true;
     const participantWaitTimer = 5;
     const deleteWaitTimer = 3;
     // TODO filter func
@@ -88,7 +89,13 @@ client.on('message', async msg => {
     let participantWaitCountdown = participantWaitTimer;
     const participateMsg = await msg.channel.send(`Please react to ✅ to participate in lockout.\nMake sure your terms are listed beforehand.`);
     await participateMsg.react("✅");
-    await msg.delete();
+    try {
+      await msg.delete();
+    }
+    catch{
+      canDelete = false;
+    }
+    
     let timerRef = setInterval(async () => {
       participantWaitCountdown--;
       await participateMsg.edit(`Please react to ✅ to participate in lockout (Finishes in ${participantWaitCountdown})\nMake sure your terms are listed beforehand.`)
@@ -110,9 +117,13 @@ client.on('message', async msg => {
     }
     let participants = (await msgReactions.first().users.fetch()).filter(u => !u.bot);
     participants.forEach(u => usersPing += u.toString() + " ")
-
-    await participateMsg.delete();
-
+  
+    try {
+      await participateMsg.delete();
+    }
+    catch {
+      await participateMsg.edit("cant delete own message sadge");
+    }
 
     const stateArrayInit = [];
     for (let i = 0; i < msgs.length; i++) {
@@ -156,8 +167,16 @@ client.on('message', async msg => {
 
   }
   if (msg.content === "clear") {
-    Promise.all((await msg.channel.messages.fetch()).filter(m=>m.author.bot).map(m => m.delete()));
-    await msg.delete();
+    try {
+
+      await msg.delete();
+      Promise.all((await msg.channel.messages.fetch()).filter(m=>m.author.bot).map(m => m.delete()));
+    }
+    catch {
+      await msg.reply("Cant delete sadge");
+    }
+    
+    
   }
 })
 
