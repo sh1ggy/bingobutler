@@ -9,7 +9,7 @@
     "lint": "next lint",
     "discord": "nodemon --exec ts-node discord/index.ts",
     "api": "nodemon --exec ts-node api/index.ts",
-    "apibuild": "rm -rf build && tsc",
+    "apibuild": "rm -rf build && tsc --noEmit false",
     "pm2": "NODE_ENV=production pm2 delete bingobot; pm2 start build/api/index.js --name bingobot",
     "prod": "NODE_ENV=production node build/api/index.js",
     "prodwin": "set NODE_ENV=production && node build/api/index.js"
@@ -22,6 +22,7 @@
     "express": "^4.17.1",
     "mongodb": "^4.1.1",
     "next": "11.1.2",
+    "node-fetch": "^2.0.0",
     "nodemon": "^2.0.12",
     "react": "17.0.2",
     "react-dom": "17.0.2",

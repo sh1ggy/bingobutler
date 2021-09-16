@@ -7,6 +7,7 @@ import cors from 'cors';
 import { connectToDatabase } from '../lib/db';
 import { Db, MongoDBNamespace, ObjectId } from 'mongodb';
 const axios = require('axios').default;
+import fetch from 'node-fetch';
 const app = express();
 const http = createServer(app);
 const io = new Server(http, {
@@ -14,10 +15,9 @@ const io = new Server(http, {
 });
 app.use(cors());
 let db: Db;
-const SERVER_URL = process.env.NODE_ENV === "production" ? "https://bb.kongroo.xyz": 'http://127.0.0.1:3001';
-
+const SERVER_URL = process.env.NODE_ENV === "production" ? "https://bb.kongroo.xyz": 'http://localhost:3001';
+const CLIENT_URL = process.env.NODE_ENV === "production" ? "https://bingobutler.vercel.app": 'http://localhost:3000';
 export const client = new Discord.Client();
-// let db: Db;
 
 export const reactionFilter: CollectorFilter = (reaction, user) => {
   return ["✅"].includes(reaction.emoji.name);
@@ -145,7 +145,7 @@ client.on('message', async msg => {
     };
     const gameId = (await db.collection("games").insertOne(dbObject)).insertedId.toHexString();
     console.log(gameId);
-    const gameUrl = `${SERVER_URL}/game/${gameId}`;
+    const gameUrl = `${CLIENT_URL}/game/${gameId}`;
 
     const masterMsg = await msg.channel.send(`Times up! these are the contestants: ${usersPing}.\nAccess the game board here: ${gameUrl}`);
 
@@ -250,6 +250,7 @@ app.get('/serverInfo', (req, res)=> {
 })
 
 app.get('/login', (req, res) => {
+  console.log(SERVER_URL);
   return res.redirect(
     'https://discordapp.com/api/oauth2/authorize' +
     '?client_id=' + process.env.CLIENT_ID +
