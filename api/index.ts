@@ -304,7 +304,7 @@ app.get('/auth/callback', async (req, res) => {
   )
   // await db.collection("users").insertOne(payload);
 
-  const backToLoginURL = 'http://localhost:3000/auth?rt=' + data.refresh_token;
+  const backToLoginURL = CLIENT_URL + '/auth?rt=' + data.refresh_token;
   res.redirect(backToLoginURL);
 })
 
