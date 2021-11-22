@@ -59,10 +59,10 @@ client.on('message', async msg => {
   if (msg.channel.type == 'dm') return;
   if (msg.channel.type == "news") return;
   if (msg.author.bot) return;
-  if (msg.content === 'ping') {
-    msg.reply('pong');
+  if (msg.content === '!bingo') {
+    msg.reply(`Visit our website at ${CLIENT_URL} for details on how to use this bot`);
   }
-  if (msg.content.startsWith('start')) {
+  if (msg.content.startsWith('!start')) {
     let canDelete = true;
     const participantWaitTimer = 5;
     const deleteWaitTimer = 3;
