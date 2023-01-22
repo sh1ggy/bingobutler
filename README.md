@@ -26,7 +26,7 @@ Before proceeding, ensure that the bot has been invited to the Discord server wi
 
 Note that the bot will clear most of its messages automatically, but there is a clear command as well to do it manually. 
 
-### Libraries
+## Libraries
 - [DiscordJS v12](https://discord.js.org/#/), a NodeJS Discord bot framework. 
 
 - [Socket.io](https://socket.io/), used for P2P connections 
